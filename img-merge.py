@@ -38,8 +38,6 @@ def main():
     output.save(my_map, 'PNG')
 
     render = Renderer(media_path='.')
-#    my_map = BytesIO(output.tobytes())
-#    my_map = 'result.png'
     result = render.render('template.odt', my_map=my_map)
 
     output = open('rendered_document.odt', 'wb')
