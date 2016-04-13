@@ -1,0 +1,19 @@
+﻿<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/kml/2.2 https://developers.google.com/kml/schema/kml22gx.xsd">
+    <Document>
+        <name>Drawing</name>
+        <Placemark id="annotation_1457971581216">
+            <name>Nouveau texte</name>
+            <Style>
+                <IconStyle>
+                    <scale>0</scale>
+                </IconStyle>
+                <LabelStyle>
+                    <color>ff0000ff</color>
+                </LabelStyle>
+            </Style>
+            <Point>
+                <coordinates>7.36976831689977,47.276801724091705</coordinates>
+            </Point>
+        </Placemark>
+    </Document>
+</kml>

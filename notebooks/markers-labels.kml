@@ -1,0 +1,21 @@
+﻿<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/kml/2.2 https://developers.google.com/kml/schema/kml22gx.xsd">
+    <Document>
+        <name>Drawing</name>
+        <Placemark id="marker_1457971579128">
+            <name>Point + label (KML)</name>
+            <Style>
+                <IconStyle>
+                    <Icon>
+                        <href>http://dev.geojb/img/maki/marker-24@2x.png</href>
+                        <gx:w>48</gx:w>
+                        <gx:h>48</gx:h>
+                    </Icon>
+                    <hotSpot x="24" y="24" xunits="pixels" yunits="pixels"/>
+                </IconStyle>
+            </Style>
+            <Point>
+                <coordinates>7.3703,47.27661372199832</coordinates>
+            </Point>
+        </Placemark>
+    </Document>
+</kml>
