@@ -145,10 +145,10 @@ Possible solutions:
     - Easy: the user can edit the template from a good WYSIWYG interface he/she
       probably already know.
 
- - **Disadvantages**
+  - **Disadvantages**
 
-   - Probably slow
-   - Requires LibreOffice on the server.
+    - Probably slow
+    - Requires LibreOffice on the server.
 
 - PDF templates with the relevant values replaced on the fly on the server. How to we handle
   multiple pages? For instance, the legend doesn't fit on one page. How do we
