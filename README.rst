@@ -200,7 +200,7 @@ PDF libraries for Python
   jinja2 to render a final document. Rely on `pdftk
   <https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/>`__ to do the PDF
   rendering.
-- `weasyprint >http://weasyprint.org/>`__: convert HTML/CSS to PDF with cairo.
+- `weasyprint <http://weasyprint.org/>`__: convert HTML/CSS to PDF with cairo.
 - `pdfdocument <https://github.com/matthiask/pdfdocument>`__: wrapper around
   ReportLab to make it easier to use.
 - `xhtml2pdf <https://github.com/xhtml2pdf/xhtml2pdf>`__: convert HTML pages to
