@@ -148,7 +148,14 @@ Possible solutions:
   - **Disadvantages**
 
     - Probably slow
-    - Requires LibreOffice on the server.
+    - Requires LibreOffice on the server. To do this, use (once all running
+      instance of LibreOffice are closed): ``soffice --convert-to pdf --outdir
+      $(pwd) rendered_document.odt`` (takes ~0.6s). Other faster solution
+      (~0.3s): start LibreOffice as a daemon
+      ``soffice --accept='socket,host=127.0.0.1,port=2002;urp;StarOffice.NamingService'
+      --headless``, and use ``unoconv --connection
+      'socket,host=127.0.0.1,port=2220,tcpNoDelay=1;urp;StarOffice.ComponentContext' -f
+      pdf rendered_document.odt``
 
 - PDF templates with the relevant values replaced on the fly on the server. How to we handle
   multiple pages? For instance, the legend doesn't fit on one page. How do we
