@@ -1,8 +1,9 @@
 import asyncio
 import functools
+import requests
 import subprocess
 
-from owslib.wms import WebMapService
+
 from PIL import Image
 from pyramid.config import Configurator
 from pyramid.response import FileResponse
@@ -35,7 +36,7 @@ def mapprint(request):
     images = loop.run_until_complete(get_images(payload, loop))
 
     for resp in images:
-        img = Image.open(resp).convert('RGBA')
+        img = Image.open(resp.raw).convert('RGBA')
         if output is None:
             output = Image.new('RGBA', img.size)
         output = Image.alpha_composite(output, img)
@@ -77,7 +78,6 @@ WIDTH=1093
 HEIGHT=1510
     """
     images = []
-    wms_servers = {}
 
     map = payload['attributes']['map']
     epsg = map['projection']
@@ -88,29 +88,40 @@ HEIGHT=1510
     for layer in payload['attributes']['map']['layers']:
         if layer['type'].lower() == 'wms':
             base_url = layer['baseURL']
-            if base_url not in wms_servers:
-                wms_servers[base_url] = WebMapService(base_url, headers=WMS_HEADERS)
 
-            wms = wms_servers[base_url]
+            bbox = get_bbox(center, scale, dpi)
+            size = get_size(bbox, dpi, scale)
+
+            params = {
+                'VERSION': '1.1.1',
+                'REQUEST': 'GetMap',
+                'LAYERS': ','.join(layer['layers']),
+                'SRS': epsg,
+                'STYLES': '',
+                'WIDTH': size[0],
+                'HEIGHT': size[1],
+                'BBOX': ','.join([str(nb) for nb in bbox]),
+                'FORMAT': layer['imageFormat'],
+            }
+
+
+
             custom_params = layer.get('customParams', {})
             transparent = False
             if 'TRANSPARENT' in custom_params:
                 transparent = custom_params['TRANSPARENT']
                 del custom_params['TRANSPARENT']
 
-            bbox = get_bbox(center, scale, dpi)
-            size = get_size(bbox, dpi, scale)
+            params.update(custom_params)
 
             future_img = loop.run_in_executor(
                 None,
                 functools.partial(
-                    wms.getmap,
-                    layers=layer['layers'],
-                    srs=epsg,
-                    bbox=bbox,
-                    size=size,
-                    format=layer['imageFormat'],
-                    transparent=transparent
+                    requests.get,
+                    base_url,
+                    params=params,
+                    headers=WMS_HEADERS,
+                    stream=True
                 )
             )
 
