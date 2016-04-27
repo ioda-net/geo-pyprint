@@ -4,6 +4,7 @@ import requests
 import subprocess
 
 
+from pdfjinja import PdfJinja
 from PIL import Image
 from pyramid.config import Configurator
 from pyramid.response import FileResponse
@@ -41,12 +42,20 @@ def mapprint(request):
             output = Image.new('RGBA', img.size)
         output = Image.alpha_composite(output, img)
 
+    return create_pdf(request, output)
+
+
+def create_pdf(request, output):
+    #return _create_pdf_libreoffice(request, output)
+    return _create_pdf_pdftk(request, output)
+
+
+def _create_pdf_libreoffice(request, output):
     my_map = BytesIO()
     output.save(my_map, 'PNG')
 
     render = Renderer(media_path='.')
     result = render.render('template.odt', my_map=my_map)
-
     with NamedTemporaryFile(
             mode='wb+',
             prefix='geo-pyprint',
@@ -65,6 +74,37 @@ def mapprint(request):
         response.headers['Content-Type'] = 'application/pdf'
 
         return response
+
+
+def _create_pdf_pdftk(request, output):
+    with NamedTemporaryFile(
+        mode='wb+',
+        prefix='geo-pypring',
+        delete=False
+    ) as output_img:
+        output.save(output_img, 'PNG')
+        output_img.flush()
+
+        pdfjinja = PdfJinja('pdfjinja-template.pdf')
+        pdfout = pdfjinja(dict(map=output_img.name))
+
+        with NamedTemporaryFile(
+            mode='wb+',
+            prefix='geo-pypring',
+            delete=False
+        ) as output_pdf:
+            pdfout.write(output_pdf)
+            output_pdf.flush()
+
+            response = FileResponse(
+                output_pdf.name,
+                request=request
+            )
+            response.headers['Content-Disposition'] = ('attachement; filename="{}"'
+                                                       .format('pdfjinja.pdf'))
+            response.headers['Content-Type'] = 'application/pdf'
+
+            return response
 
 
 @asyncio.coroutine
