@@ -104,13 +104,7 @@ HEIGHT=1510
                 'FORMAT': layer['imageFormat'],
             }
 
-
-
             custom_params = layer.get('customParams', {})
-            transparent = False
-            if 'TRANSPARENT' in custom_params:
-                transparent = custom_params['TRANSPARENT']
-                del custom_params['TRANSPARENT']
 
             params.update(custom_params)
 
