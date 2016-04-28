@@ -1,0 +1,30 @@
+output_filename = 'output-{year}-{month}-{day}.pdf'
+# Which file to use for the North Arrow. If present, the North Arrow will be
+# printed on the template if {{ noth_arrow | paste }} (pdf form) or
+# {{ my_map | image }} (LibreOffice) is found.
+north_arrow = 'north.svg'
+
+[headers]
+add = [ { X-From = "Geo PyPrint" } ]
+forward = ["Referer"]
+override = [ { User-Agent = "Geo PyPrint" } ]
+
+[headers.dns.match."dev.geojb"]
+forward = ["Authorization"]
+
+
+[layout."a4 portrait"]
+# Relative to this file. If extensions is PDF, it will be rendered with PDFTK.
+# Otherwise, LibreOffice will be used.
+template = "a4 portrait.pdf"
+map_dimensions = { height = 297.0, width = 210.01 }
+# Supported values are mm, m, in, inches. If not provided, will default to mm.
+map_dimensions_unit = "mm"
+# Will be requested with a GET request
+url_attributes = ["qr"]
+
+[layout."a5 portrait"]
+template = "a5 portrait.odt"
+map_dimensions = { height = 100, width = 50 }
+# Supported values are mm, m, in, inches. If not provided, will default to mm.
+map_dimensions_unit = "mm"
