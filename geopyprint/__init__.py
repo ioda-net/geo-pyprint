@@ -37,7 +37,7 @@ def mapprint(request):
     images = loop.run_until_complete(get_images(payload, loop))
 
     for resp in images:
-        img = Image.open(resp.raw).convert('RGBA')
+        img = Image.open(BytesIO(resp.content)).convert('RGBA')
         if output is None:
             output = Image.new('RGBA', img.size)
         output = Image.alpha_composite(output, img)
@@ -154,8 +154,7 @@ HEIGHT=1510
                     requests.get,
                     base_url,
                     params=params,
-                    headers=WMS_HEADERS,
-                    stream=True
+                    headers=WMS_HEADERS
                 )
             )
 
