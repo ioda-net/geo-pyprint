@@ -1,0 +1,133 @@
+{
+    "attributes": {
+        "map": {
+            "dpi": 150,
+            "center": [
+                585000,
+                227500
+            ],
+            "projection": "EPSG:21781",
+            "rotation": 0,
+            "scale": 75000,
+            "layers": [
+                {
+                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "imageFormat": "image/png",
+                    "layers": [
+                        "COUVERTUREDUSOL"
+                    ],
+                    "customParams": {
+                        "TRANSPARENT": true,
+                        "LANG": "fr",
+                        "MAP.RESOLUTION": 150,
+                        "MAP_RESOLUTION": 150,
+                        "DPI": 150
+                    },
+                    "type": "wms",
+                    "opacity": 1
+                },
+                {
+                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "imageFormat": "image/png",
+                    "layers": [
+                        "CADASTRE_C"
+                    ],
+                    "customParams": {
+                        "TRANSPARENT": true,
+                        "LANG": "fr",
+                        "MAP.RESOLUTION": 150,
+                        "MAP_RESOLUTION": 150,
+                        "DPI": 150
+                    },
+                    "type": "wms",
+                    "opacity": 1
+                },
+                {
+                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "imageFormat": "image/png",
+                    "layers": [
+                        "CADASTRE_P"
+                    ],
+                    "customParams": {
+                        "TRANSPARENT": true,
+                        "LANG": "fr",
+                        "MAP.RESOLUTION": 150,
+                        "MAP_RESOLUTION": 150,
+                        "DPI": 150
+                    },
+                    "type": "wms",
+                    "opacity": 1
+                },
+                {
+                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "imageFormat": "image/png",
+                    "layers": [
+                        "CADASTRE_A"
+                    ],
+                    "customParams": {
+                        "TRANSPARENT": true,
+                        "LANG": "fr",
+                        "MAP.RESOLUTION": 150,
+                        "MAP_RESOLUTION": 150,
+                        "DPI": 150
+                    },
+                    "type": "wms",
+                    "opacity": 1
+                },
+                {
+                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "imageFormat": "image/png",
+                    "layers": [
+                        "COMMUNE_ARRONDISSEMENT"
+                    ],
+                    "customParams": {
+                        "TRANSPARENT": true,
+                        "LANG": "fr",
+                        "MAP.RESOLUTION": 150,
+                        "MAP_RESOLUTION": 150,
+                        "DPI": 150
+                    },
+                    "type": "wms",
+                    "opacity": 1
+                },
+                {
+                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "imageFormat": "image/png",
+                    "layers": [
+                        "CADASTRE_N"
+                    ],
+                    "customParams": {
+                        "TRANSPARENT": true,
+                        "LANG": "fr",
+                        "MAP.RESOLUTION": 150,
+                        "MAP_RESOLUTION": 150,
+                        "DPI": 150
+                    },
+                    "type": "wms",
+                    "opacity": 1
+                },
+                {
+                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "imageFormat": "image/png",
+                    "layers": [
+                        "CADASTRESOLAIRE"
+                    ],
+                    "customParams": {
+                        "TRANSPARENT": true,
+                        "LANG": "fr",
+                        "MAP.RESOLUTION": 150,
+                        "MAP_RESOLUTION": 150,
+                        "DPI": 150
+                    },
+                    "type": "wms",
+                    "opacity": 1
+                }
+            ]
+        },
+        "legend": {},
+        "name": "Ma carte",
+        "scale": 75000,
+        "attributions": "les géomètres-conservateurs, http://www.swisstopo.admin.ch"
+    },
+    "layout": "A4 portrait"
+}

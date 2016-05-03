@@ -13,12 +13,13 @@ with open(os.path.join(here, 'README.rst')) as f:
 
 
 requires = [
-    'paste',
-    'pyramid',
-    'pyramid_debugtoolbar',
-    'pyramid_tm',
-    'secretary',
-    'waitress',
+    'paste >= 2.0.0',
+    'pyramid >= 1.6.0',
+    'pyramid_debugtoolbar >= 3.0',
+    'pyramid_tm >= 0.12.0',
+    'requests >= 2.9.0',
+    'secretary >= 0.2.8',
+    'waitress >= 0.9.0',
 ]
 
 setup(

@@ -308,6 +308,27 @@ Questions
 - Should we provide a conversion script to switch configuration from MFP to GPP?
 
 
+Try it
+======
+
+This section will be updated once this project is released on `Pypi
+<https://pypi.python.org/pypi>`__ or the `Docker hub
+<https://hub.docker.com/>`__.
+
+#. Clone this project: ``git clone
+   https://github.com/ioda-net/geo-pyprint.git``
+#. Move to the clone: ``cd geo-pyprint``
+#. Create a new venv: ``virtualenv venv -p /usr/bin/python3`` and activate
+   it: ``source venv/bin/activate``
+#. Install the dependencies in the virtualenv: ``./setup.py develop``.
+#. Install the development version of pdfjinja: ``pip install
+   git+https://github.com/rammie/pdfjinja.git``
+#. Install `PDFTK <https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/>`__
+#. Launch the app: ``pserve development.ini``
+#. Test the app: ``curl -X POST -d @test-payload.json http://0.0.0.0:8383/print
+   > output.pdf`` This should create a PDF file from the request.
+
+
 Questions
 =========
 
