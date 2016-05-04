@@ -70,9 +70,6 @@ class MapPrint:
             if not isinstance(img, Image.Image):
                 img = Image.open(BytesIO(img.content)).convert('RGBA')
 
-            if img.size != self._map_size:
-                img = img.resize(self._map_size)
-
             self._map_image = Image.alpha_composite(self._map_image, img)
 
     def _get_images(self):
@@ -83,73 +80,8 @@ class MapPrint:
                 future_img = self._get_wms_image(layer)
                 images.append(future_img)
             elif layer['type'].lower() == 'wmts':
-                matrix = layer['matrices'][0]
-                for candidate_matrix in layer['matrices'][1:]:
-                    if abs(candidate_matrix['scaleDenominator'] - self._scale) < abs(matrix['scaleDenominator'] - self._scale):
-                        matrix = candidate_matrix
-
-                if layer['requestEncoding'].upper() == 'REST':
-                    size_on_screen = matrix['tileSize'][0], matrix['tileSize'][1]
-                    layer_resolution = matrix['scaleDenominator'] / (LAYER_DPI * 39.37)
-                    tile_size_in_world = (size_on_screen[0] * layer_resolution, size_on_screen[1] * layer_resolution)
-                    x_min, y_max = matrix['topLeftCorner'][0], matrix['topLeftCorner'][1]
-                    x_max, y_min = (x_min + tile_size_in_world[0], y_max - tile_size_in_world[1])
-                    col_min = 0
-                    col_max = 0
-                    row_min = 0
-                    row_max = 0
-                    col = 0
-                    row = 0
-                    wmts_bbox = [0, 0, 0, 0]
-                    while True:
-                        if x_min <= self._bbox[0] and x_max > self._bbox[0]:
-                            wmts_bbox[0] = x_min
-                            col_min = col
-                        if x_min <= self._bbox[2] and x_max > self._bbox[2]:
-                            col_max = col
-                            wmts_bbox[2] = x_max
-                            break
-                        col += 1
-                        x_min = x_max
-                        x_max += tile_size_in_world[0]
-
-                    while True:
-                        if y_min < self._bbox[1] and y_max > self._bbox[1]:
-                            row_max = row
-                            wmts_bbox[1] = y_min
-                            break
-                        if y_min < self._bbox[3] and y_max > self._bbox[3]:
-                            row_min = row
-                            wmts_bbox[3] = y_max
-                        row += 1
-                        y_max = y_min
-                        y_min -= tile_size_in_world[1]
-
-                    url = layer['baseURL'].replace('{TileMatrix}', matrix['identifier'])
-                    for dimension in layer['dimensions']:
-                        url = url.replace('{' + dimension + '}', layer['dimensionParams'][dimension])
-
-                    width, height = size_on_screen
-                    combined_size = (width * (col_max - col_min + 1), height * (row_max - row_min + 1))
-                    combined_image = Image.new('RGBA', combined_size)
-                    for col in range(col_min, col_max + 1):
-                        for row in range(row_min, row_max + 1):
-                            resp = requests.get(url.replace('{TileRow}', str(row)).replace('{TileCol}', str(col)), headers=WMS_HEADERS)
-                            if resp.status_code != 200:
-                                continue
-
-                            img = Image.open(BytesIO(resp.content)).convert('RGBA')
-                            combined_image.paste(img, box=(width * (col - col_min), height * (row - row_min)))
-
-                    diff = self._bbox[0] - wmts_bbox[0], self._bbox[1] - wmts_bbox[1] - 800
-                    width, height = self._bbox[2] - self._bbox[0], self._bbox[3] - self._bbox[1]
-                    crop_box = int(diff[0] / layer_resolution), int(diff[1] / layer_resolution), int((diff[0] + width) / layer_resolution), int((diff[1] + height) / layer_resolution)
-
-                    wmts_cropped = combined_image.crop(box=crop_box)
-
-                    future = asyncio.Future(loop=self._loop)
-                    future.set_result(wmts_cropped)
-                    images.insert(0, future)
+                future_img = self._get_wmts_image(layer)
+                images.append(future_img)
 
         return self._loop.run_until_complete(asyncio.gather(*images))
 
@@ -182,6 +114,81 @@ class MapPrint:
         )
 
         return future_img
+
+    def _get_wmts_image(self, layer_info):
+        matrix = layer_info['matrices'][0]
+        for candidate_matrix in layer_info['matrices'][1:]:
+            if abs(candidate_matrix['scaleDenominator'] - self._scale) < abs(matrix['scaleDenominator'] - self._scale):
+                matrix = candidate_matrix
+
+        if layer_info['requestEncoding'].upper() == 'REST':
+            return self._get_wmts_image_rest(layer_info, matrix)
+
+    def _get_wmts_image_rest(self, layer_info, matrix):
+        size_on_screen = matrix['tileSize'][0], matrix['tileSize'][1]
+        layer_resolution = matrix['scaleDenominator'] / (LAYER_DPI * 39.37)
+        tile_size_in_world = (size_on_screen[0] * layer_resolution, size_on_screen[1] * layer_resolution)
+        x_min, y_max = matrix['topLeftCorner'][0], matrix['topLeftCorner'][1]
+        x_max, y_min = (x_min + tile_size_in_world[0], y_max - tile_size_in_world[1])
+        col_min = 0
+        col_max = 0
+        row_min = 0
+        row_max = 0
+        col = 0
+        row = 0
+        wmts_bbox = [0, 0, 0, 0]
+        while True:
+            if x_min <= self._bbox[0] and x_max > self._bbox[0]:
+                wmts_bbox[0] = x_min
+                col_min = col
+            if x_min <= self._bbox[2] and x_max > self._bbox[2]:
+                col_max = col
+                wmts_bbox[2] = x_max
+                break
+            col += 1
+            x_min = x_max
+            x_max += tile_size_in_world[0]
+
+        while True:
+            if y_min < self._bbox[1] and y_max > self._bbox[1]:
+                row_max = row
+                wmts_bbox[1] = y_min
+                break
+            if y_min < self._bbox[3] and y_max > self._bbox[3]:
+                row_min = row
+                wmts_bbox[3] = y_max
+            row += 1
+            y_max = y_min
+            y_min -= tile_size_in_world[1]
+
+        url = layer_info['baseURL'].replace('{TileMatrix}', matrix['identifier'])
+        for dimension in layer_info['dimensions']:
+            url = url.replace('{' + dimension + '}', layer_info['dimensionParams'][dimension])
+
+        width, height = size_on_screen
+        combined_size = (width * (col_max - col_min + 1), height * (row_max - row_min + 1))
+        combined_image = Image.new('RGBA', combined_size)
+        for col in range(col_min, col_max + 1):
+            for row in range(row_min, row_max + 1):
+                resp = requests.get(url.replace('{TileRow}', str(row)).replace('{TileCol}', str(col)), headers=WMS_HEADERS)
+                if resp.status_code != 200:
+                    continue
+
+                img = Image.open(BytesIO(resp.content)).convert('RGBA')
+                combined_image.paste(img, box=(width * (col - col_min), height * (row - row_min)))
+
+        diff = self._bbox[0] - wmts_bbox[0], self._bbox[1] - wmts_bbox[1] - 800
+        width, height = self._bbox[2] - self._bbox[0], self._bbox[3] - self._bbox[1]
+        crop_box = int(diff[0] / layer_resolution), int(diff[1] / layer_resolution), int((diff[0] + width) / layer_resolution), int((diff[1] + height) / layer_resolution)
+
+        wmts_cropped = combined_image.crop(box=crop_box)
+        if wmts_cropped.size != self._map_size:
+            wmts_cropped = wmts_cropped.resize(self._map_size)
+
+        future = asyncio.Future(loop=self._loop)
+        future.set_result(wmts_cropped)
+
+        return future
 
     def create_pdf(self):
         return self._create_pdf_libreoffice()
