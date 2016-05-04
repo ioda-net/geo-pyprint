@@ -80,34 +80,7 @@ class MapPrint:
 
         for layer in self._payload['attributes']['map']['layers']:
             if layer['type'].lower() == 'wms':
-                base_url = layer['baseURL']
-
-                params = {
-                    'VERSION': '1.1.1',
-                    'REQUEST': 'GetMap',
-                    'LAYERS': ','.join(layer['layers']),
-                    'SRS': self._projection,
-                    'STYLES': '',
-                    'WIDTH': self._map_size[0],
-                    'HEIGHT': self._map_size[1],
-                    'BBOX': ','.join([str(nb) for nb in self._bbox]),
-                    'FORMAT': layer['imageFormat'],
-                }
-
-                custom_params = layer.get('customParams', {})
-
-                params.update(custom_params)
-
-                future_img = self._loop.run_in_executor(
-                    None,
-                    functools.partial(
-                        requests.get,
-                        base_url,
-                        params=params,
-                        headers=WMS_HEADERS
-                    )
-                )
-
+                future_img = self._get_wms_image(layer)
                 images.append(future_img)
             elif layer['type'].lower() == 'wmts':
                 matrix = layer['matrices'][0]
@@ -179,6 +152,36 @@ class MapPrint:
                     images.insert(0, future)
 
         return self._loop.run_until_complete(asyncio.gather(*images))
+
+    def _get_wms_image(self, layer_info):
+        base_url = layer_info['baseURL']
+
+        params = {
+            'VERSION': '1.1.1',
+            'REQUEST': 'GetMap',
+            'LAYERS': ','.join(layer_info['layers']),
+            'SRS': self._projection,
+            'STYLES': '',
+            'WIDTH': self._map_size[0],
+            'HEIGHT': self._map_size[1],
+            'BBOX': ','.join([str(nb) for nb in self._bbox]),
+            'FORMAT': layer_info['imageFormat'],
+        }
+
+        custom_params = layer_info.get('customParams', {})
+        params.update(custom_params)
+
+        future_img = self._loop.run_in_executor(
+            None,
+            functools.partial(
+                requests.get,
+                base_url,
+                params=params,
+                headers=WMS_HEADERS
+            )
+        )
+
+        return future_img
 
     def create_pdf(self):
         return self._create_pdf_libreoffice()
