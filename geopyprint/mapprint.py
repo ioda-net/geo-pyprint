@@ -168,14 +168,30 @@ class MapPrint:
         width, height = size_on_screen
         combined_size = (width * (col_max - col_min + 1), height * (row_max - row_min + 1))
         combined_image = Image.new('RGBA', combined_size)
+        wmts_images = []
+        wmts_images_infos = []
         for col in range(col_min, col_max + 1):
             for row in range(row_min, row_max + 1):
-                resp = requests.get(url.replace('{TileRow}', str(row)).replace('{TileCol}', str(col)), headers=WMS_HEADERS)
-                if resp.status_code != 200:
-                    continue
+                future_img = self._loop.run_in_executor(
+                    None,
+                    functools.partial(
+                        requests.get,
+                        url.replace('{TileRow}', str(row)).replace('{TileCol}', str(col)),
+                        headers=WMS_HEADERS
+                    )
+                )
+                wmts_images.append(future_img)
+                wmts_images_infos.append((row, col))
 
-                img = Image.open(BytesIO(resp.content)).convert('RGBA')
-                combined_image.paste(img, box=(width * (col - col_min), height * (row - row_min)))
+        wmts_images = self._loop.run_until_complete(asyncio.gather(*wmts_images))
+
+        for index, wmts_image in enumerate(wmts_images):
+            resp = wmts_image
+            row, col = wmts_images_infos[index]
+            if resp.status_code != 200:
+                continue
+            img = Image.open(BytesIO(resp.content)).convert('RGBA')
+            combined_image.paste(img, box=(width * (col - col_min), height * (row - row_min)))
 
         diff = self._bbox[0] - wmts_bbox[0], self._bbox[1] - wmts_bbox[1] - 800
         width, height = self._bbox[2] - self._bbox[0], self._bbox[3] - self._bbox[1]
