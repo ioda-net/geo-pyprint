@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import os
 import requests
 import subprocess
 
@@ -30,7 +31,7 @@ def main(global_config, **settings):
 
 @view_config(route_name='mapprint')
 def mapprint(request):
-    output = None
+    map_image = None
 
     payload = request.json_body
 
@@ -44,73 +45,85 @@ def mapprint(request):
         if img.size != (1240, 1743):
             img = img.resize((1240, 1743))
 
-        if output is None:
-            output = Image.new('RGBA', (1240, 1743))
-        output = Image.alpha_composite(output, img)
+        if map_image is None:
+            map_image = Image.new('RGBA', (1240, 1743))
+        map_image = Image.alpha_composite(map_image, img)
 
-    return create_pdf(request, output)
+    output_file_name = create_pdf(map_image)
+
+    response = FileResponse(
+        output_file_name,
+        request=request
+    )
+    response.headers['Content-Disposition'] = ('attachement; filename="{}"'
+                                               .format(output_file_name + '.pdf'))
+    response.headers['Content-Type'] = 'application/pdf'
+
+    if os.path.exists(output_file_name):
+        os.remove(output_file_name)
+
+    return response
 
 
-def create_pdf(request, output):
-    return _create_pdf_libreoffice(request, output)
-    #return _create_pdf_pdftk(request, output)
+def create_pdf(output):
+    return _create_pdf_libreoffice(output)
+    #return _create_pdf_pdftk(output)
 
 
-def _create_pdf_libreoffice(request, output):
-    my_map = BytesIO()
-    output.save(my_map, 'PNG')
+def _create_pdf_libreoffice(map_image):
+    output_image = BytesIO()
+    map_image.save(output_image, 'PNG')
 
     render = Renderer(media_path='.')
-    result = render.render('template.odt', my_map=my_map)
+    # TODO: use the configuration to select the template
+    # TODO: use the configuration to select the name of the key in the template
+    result = render.render('template.odt', my_map=output_image)
     with NamedTemporaryFile(
             mode='wb+',
-            prefix='geo-pyprint',
-            delete=True) as output:
-        output.write(result)
-        output.flush()
+            prefix='geo-pyprint_',
+            delete=True
+    ) as generated_odt:
+        generated_odt.write(result)
+        generated_odt.flush()
 
-        subprocess.call(['unoconv', '-f', 'pdf', '-o', output.name + '.pdf', output.name], timeout=None)
+        output_name = generated_odt.name + '.pdf'
+        cmd = [
+            'unoconv',
+            '-f',
+            'pdf',
+            '-o',
+            output_name,
+            generated_odt.name
+        ]
+        subprocess.call(cmd, timeout=None)
 
-        response = FileResponse(
-            output.name + '.pdf',
-            request=request
-        )
-        response.headers['Content-Disposition'] = ('attachement; filename="{}"'
-                                                   .format(output.name + '.pdf'))
-        response.headers['Content-Type'] = 'application/pdf'
-
-        return response
+        return output_name
 
 
-def _create_pdf_pdftk(request, output):
+def _create_pdf_pdftk(map_image):
     with NamedTemporaryFile(
         mode='wb+',
-        prefix='geo-pypring',
-        delete=False
-    ) as output_img:
-        output.save(output_img, 'PNG')
-        output_img.flush()
+        prefix='geo-pyprint_',
+        delete=True
+    ) as map_image_file:
+        map_image.save(map_image_file, 'PNG')
+        map_image_file.flush()
 
+        # TODO: use the configuration to select the template
+        # TODO: use the configuration to select the name of the key in the template
         pdfjinja = PdfJinja('pdfjinja-template.pdf')
-        pdfout = pdfjinja(dict(map=output_img.name))
+        pdfout = pdfjinja(dict(map=map_image_file.name))
 
         with NamedTemporaryFile(
             mode='wb+',
-            prefix='geo-pypring',
+            prefix='geo-pyprint_',
+            suffix='.pdf',
             delete=False
-        ) as output_pdf:
-            pdfout.write(output_pdf)
-            output_pdf.flush()
+        ) as output_file:
+            pdfout.write(output_file)
+            output_file.flush()
 
-            response = FileResponse(
-                output_pdf.name,
-                request=request
-            )
-            response.headers['Content-Disposition'] = ('attachement; filename="{}"'
-                                                       .format('pdfjinja.pdf'))
-            response.headers['Content-Type'] = 'application/pdf'
-
-            return response
+            return output_file.name
 
 
 def get_images(payload, loop):
