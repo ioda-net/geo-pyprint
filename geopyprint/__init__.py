@@ -15,6 +15,7 @@ from tempfile import NamedTemporaryFile
 from io import BytesIO
 
 WMS_HEADERS = {'Referer': 'http://localhost'}
+LAYER_DPI = 25.4 / 0.28
 
 
 def main(global_config, **settings):
@@ -34,20 +35,25 @@ def mapprint(request):
     payload = request.json_body
 
     loop = asyncio.new_event_loop()
-    images = loop.run_until_complete(get_images(payload, loop))
+    images = get_images(payload, loop)
 
-    for resp in images:
-        img = Image.open(BytesIO(resp.content)).convert('RGBA')
+    for img in images:
+        if not isinstance(img, Image.Image):
+            img = Image.open(BytesIO(img.content)).convert('RGBA')
+
+        if img.size != (1240, 1743):
+            img = img.resize((1240, 1743))
+
         if output is None:
-            output = Image.new('RGBA', img.size)
+            output = Image.new('RGBA', (1240, 1743))
         output = Image.alpha_composite(output, img)
 
     return create_pdf(request, output)
 
 
 def create_pdf(request, output):
-    #return _create_pdf_libreoffice(request, output)
-    return _create_pdf_pdftk(request, output)
+    return _create_pdf_libreoffice(request, output)
+    #return _create_pdf_pdftk(request, output)
 
 
 def _create_pdf_libreoffice(request, output):
@@ -107,7 +113,6 @@ def _create_pdf_pdftk(request, output):
             return response
 
 
-@asyncio.coroutine
 def get_images(payload, loop):
     """
 /ows/geojb?MAP_RESOLUTION=150&DPI=150&TRANSPARENT=true&LANG=fr&MAP.RESOLUTION=150&FORMAT=image%2Fpng&REQUEST=GetMap&SRS=EPSG%3A21781&BBOX=578059.45%2C217911.5%2C591940.5499999999%2C237088.5V&ERSION=1.1.1&STYLES=&SERVICE=WMS&WIDTH=1093&HEIGHT=1510&LAYERS=CADASTRE_A"
@@ -125,12 +130,12 @@ HEIGHT=1510
     center = map['center']
     dpi = map['dpi']
 
+    bbox = get_bbox(center, scale, dpi)
+    size = get_size(bbox, dpi, scale)
+
     for layer in payload['attributes']['map']['layers']:
         if layer['type'].lower() == 'wms':
             base_url = layer['baseURL']
-
-            bbox = get_bbox(center, scale, dpi)
-            size = get_size(bbox, dpi, scale)
 
             params = {
                 'VERSION': '1.1.1',
@@ -159,8 +164,76 @@ HEIGHT=1510
             )
 
             images.append(future_img)
+        elif layer['type'].lower() == 'wmts':
+            matrix = layer['matrices'][0]
+            for candidate_matrix in layer['matrices'][1:]:
+                if abs(candidate_matrix['scaleDenominator'] - scale) < abs(matrix['scaleDenominator'] - scale):
+                    matrix = candidate_matrix
 
-    return asyncio.gather(*images)
+            if layer['requestEncoding'].upper() == 'REST':
+                size_on_screen = matrix['tileSize'][0], matrix['tileSize'][1]
+                layer_resolution = matrix['scaleDenominator'] / (LAYER_DPI * 39.37)
+                tile_size_in_world = (size_on_screen[0] * layer_resolution, size_on_screen[1] * layer_resolution)
+                x_min, y_max = matrix['topLeftCorner'][0], matrix['topLeftCorner'][1]
+                x_max, y_min = (x_min + tile_size_in_world[0], y_max - tile_size_in_world[1])
+                col_min = 0
+                col_max = 0
+                row_min = 0
+                row_max = 0
+                col = 0
+                row = 0
+                wmts_bbox = [0, 0, 0, 0]
+                while True:
+                    if x_min <= bbox[0] and x_max > bbox[0]:
+                        wmts_bbox[0] = x_min
+                        col_min = col
+                    if x_min <= bbox[2] and x_max > bbox[2]:
+                        col_max = col
+                        wmts_bbox[2] = x_max
+                        break
+                    col += 1
+                    x_min = x_max
+                    x_max += tile_size_in_world[0]
+
+                while True:
+                    if y_min < bbox[1] and y_max > bbox[1]:
+                        row_max = row
+                        wmts_bbox[1] = y_min
+                        break
+                    if y_min < bbox[3] and y_max > bbox[3]:
+                        row_min = row
+                        wmts_bbox[3] = y_max
+                    row += 1
+                    y_max = y_min
+                    y_min -= tile_size_in_world[1]
+
+                url = layer['baseURL'].replace('{TileMatrix}', matrix['identifier'])
+                for dimension in layer['dimensions']:
+                    url = url.replace('{' + dimension + '}', layer['dimensionParams'][dimension])
+
+                width, height = size_on_screen
+                combined_size = (width * (col_max - col_min + 1), height * (row_max - row_min + 1))
+                combined_image = Image.new('RGBA', combined_size)
+                for col in range(col_min, col_max + 1):
+                    for row in range(row_min, row_max + 1):
+                        resp = requests.get(url.replace('{TileRow}', str(row)).replace('{TileCol}', str(col)), headers=WMS_HEADERS)
+                        if resp.status_code != 200:
+                            continue
+
+                        img = Image.open(BytesIO(resp.content)).convert('RGBA')
+                        combined_image.paste(img, box=(width * (col - col_min), height * (row - row_min)))
+
+                diff = bbox[0] - wmts_bbox[0], bbox[1] - wmts_bbox[1] - 800
+                width, height = bbox[2] - bbox[0], bbox[3] - bbox[1]
+                crop_box = int(diff[0] / layer_resolution), int(diff[1] / layer_resolution), int((diff[0] + width) / layer_resolution), int((diff[1] + height) / layer_resolution)
+
+                wmts_cropped = combined_image.crop(box=crop_box)
+
+                future = asyncio.Future(loop=loop)
+                future.set_result(wmts_cropped)
+                images.insert(0, future)
+
+    return loop.run_until_complete(asyncio.gather(*images))
 
 
 def get_size(bbox, dpi, scale):
