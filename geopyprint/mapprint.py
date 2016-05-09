@@ -208,7 +208,7 @@ class MapPrint:
 
     def create_pdf(self):
         return self._create_pdf_libreoffice()
-        #return _create_pdf_pdftk(output)
+        #return self._create_pdf_pdftk()
 
     def _create_pdf_libreoffice(self):
         output_image = BytesIO()
