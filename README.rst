@@ -315,6 +315,10 @@ This section will be updated once this project is released on `Pypi
 <https://pypi.python.org/pypi>`__ or the `Docker hub
 <https://hub.docker.com/>`__.
 
+#. Install unoconv binary from your distribution repository
+   For Fedora RHEL ``yum install unoconv``
+   For openSUSE SLES ``zypper install unoconv``
+   For Debian Ubuntu ``apt-get install unoconv``
 #. Clone this project: ``git clone
    https://github.com/ioda-net/geo-pyprint.git``
 #. Move to the clone: ``cd geo-pyprint``
