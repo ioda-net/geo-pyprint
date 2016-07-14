@@ -11,7 +11,7 @@
             "scale": 75000,
             "layers": [
                 {
-                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "baseURL": "http://geojb.dev/ows/geojb?",
                     "imageFormat": "image/png",
                     "layers": [
                         "COUVERTUREDUSOL"
@@ -27,7 +27,7 @@
                     "opacity": 1
                 },
                 {
-                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "baseURL": "http://geojb.dev/ows/geojb?",
                     "imageFormat": "image/png",
                     "layers": [
                         "CADASTRE_C"
@@ -43,7 +43,7 @@
                     "opacity": 1
                 },
                 {
-                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "baseURL": "http://geojb.dev/ows/geojb?",
                     "imageFormat": "image/png",
                     "layers": [
                         "CADASTRE_P"
@@ -59,7 +59,7 @@
                     "opacity": 1
                 },
                 {
-                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "baseURL": "http://geojb.dev/ows/geojb?",
                     "imageFormat": "image/png",
                     "layers": [
                         "CADASTRE_A"
@@ -75,7 +75,7 @@
                     "opacity": 1
                 },
                 {
-                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "baseURL": "http://geojb.dev/ows/geojb?",
                     "imageFormat": "image/png",
                     "layers": [
                         "COMMUNE_ARRONDISSEMENT"
@@ -91,7 +91,7 @@
                     "opacity": 1
                 },
                 {
-                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "baseURL": "http://geojb.dev/ows/geojb?",
                     "imageFormat": "image/png",
                     "layers": [
                         "CADASTRE_N"
@@ -107,7 +107,7 @@
                     "opacity": 1
                 },
                 {
-                    "baseURL": "https://map.geojb.ch/ows/geojb?",
+                    "baseURL": "http://geojb.dev/ows/geojb?",
                     "imageFormat": "image/png",
                     "layers": [
                         "CADASTRESOLAIRE"
